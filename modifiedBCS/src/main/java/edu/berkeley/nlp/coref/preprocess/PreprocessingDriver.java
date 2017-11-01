@@ -39,6 +39,8 @@ public class PreprocessingDriver implements Runnable {
   public static String outputDir = "";
   @Option(gloss = "Skip sentence splitting entirely.")
   public static boolean skipSentenceSplitting = false;
+  @Option(gloss = "Skip tokenization and assume space-separated tokens.")
+  public static boolean skipTokenization = false;
   @Option(gloss = "Respect line breaks for sentence segmentation (i.e. a new line always means a new sentence). False by default.")
   public static boolean respectInputLineBreaks = false;
   @Option(gloss = "Respect two consecutive line breaks for sentence segmentation (i.e. a blank line always means a new sentence). True by default.")
@@ -89,7 +91,15 @@ public class PreprocessingDriver implements Runnable {
     } else {
       sentences = splitter.splitSentences(canonicalizedParagraphs);
     }
-    String[][] tokenizedSentences = splitter.tokenize(sentences);
+    String[][] tokenizedSentences = null;
+    if (skipTokenization) {
+        tokenizedSentences = new String[sentences.length][];
+        for(int i = 0; i < sentences.length; i++) {
+            tokenizedSentences[i] = sentences[i].split(" ");
+        }
+    } else {
+        tokenizedSentences = splitter.tokenize(sentences);
+    }
     Logger.logss("Document " + inputPath + " contains " + lines.length + " lines and " + tokenizedSentences.length + " sentences");
     PrintWriter writer = IOUtils.openOutHard(outputPath);
     writer.println("#begin document (" + inputPath + "); part 000");
