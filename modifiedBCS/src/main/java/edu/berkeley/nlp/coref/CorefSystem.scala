@@ -37,7 +37,7 @@ object CorefSystem {
   def loadRawConllDocs(path: String, size: Int, gold: Boolean): Seq[ConllDoc] = {
     val suffix = if (gold) "gold_conll" else Driver.docSuffix;
     Logger.logss("Loading " + size + " docs from " + path + " ending with " + suffix);
-    val files = new File(path).listFiles().filter(file => file.getAbsolutePath.endsWith(suffix));
+    val files = new File(path).listFiles().filter(file => file.getAbsolutePath.endsWith(suffix)).sorted;
     val reader = new ConllDocReader(Driver.lang);
     val docs = new ArrayBuffer[ConllDoc];
     var docCounter = 0;
