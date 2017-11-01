@@ -37,6 +37,7 @@ class ConllDocReader(val lang: Language) {
       if (line.startsWith("#begin document")) {
         val thisLineDocID = line.substring(allLines(i).indexOf("(") + 1, allLines(i).indexOf(")"));
         val thisLinePartNo = line.substring(line.indexOf("part ") + 5).trim.toInt;
+        Logger.logss("document " + thisLineDocID);
         if (docID == "") {
           docID = thisLineDocID;
           docPartNo = thisLinePartNo;
