@@ -72,7 +72,7 @@ object FeatureExtractor {
     featurizerTrainer.featurizeBasic(trainDocGraphs, pwFeaturizer);
     pwFeaturizer.printFeatureTemplateCounts;
     // write pairwise train features
-    TextPickler.writePWFeats(trainDocGraphs, pwFeatureIndexer.size(), pfx + "-" + MiniDriver.pairwiseFeats + "-" + "pwTrainFeats.txt");
+    HDF5Pickler.writePWFeats(trainDocGraphs, pwFeatureIndexer.size(), pfx + "-" + MiniDriver.pairwiseFeats + "-" + "pwTrainFeats.h5");
 
     // write pw feature mapping
     val printerPW = new PrintWriter(pfx+"-"+ MiniDriver.pairwiseFeats + "-" + "pwMapping.txt");
@@ -95,7 +95,7 @@ object FeatureExtractor {
     TextPickler.writeAnaphFeats(devDocGraphs, pfx + "-" + MiniDriver.pairwiseFeats + "-" + "anaphDevFeats.txt");
     devDocGraphs = devDocs.map(new DocumentGraph(_, false)).sortBy(_.corefDoc.rawDoc.printableDocName);
     featurizerTrainer.featurizeBasic(devDocGraphs,pwFeaturizer);
-    TextPickler.writePWFeats(devDocGraphs, pwFeatureIndexer.size(), pfx + "-" +  MiniDriver.pairwiseFeats + "-" + "pwDevFeats.txt");
+    HDF5Pickler.writePWFeats(devDocGraphs, pwFeatureIndexer.size(), pfx + "-" +  MiniDriver.pairwiseFeats + "-" + "pwDevFeats.h5");
     
     // write dev oracle predicted clustering
     TextPickler.writePredOracleClusterings(devDocGraphs, pfx+"DevOPCs.txt"); 
@@ -110,6 +110,6 @@ object FeatureExtractor {
     TextPickler.writeAnaphFeats(testDocGraphs, pfx + "-" +  MiniDriver.pairwiseFeats + "-" + "anaphTestFeats.txt");
     testDocGraphs = testDocs.map(new DocumentGraph(_, false)).sortBy(_.corefDoc.rawDoc.printableDocName);
     featurizerTrainer.featurizeBasic(testDocGraphs,pwFeaturizer);
-    TextPickler.writePWFeats(testDocGraphs, pwFeatureIndexer.size(), pfx + "-" + MiniDriver.pairwiseFeats + "-" + "pwTestFeats.txt");  
+    HDF5Pickler.writePWFeats(testDocGraphs, pwFeatureIndexer.size(), pfx + "-" + MiniDriver.pairwiseFeats + "-" + "pwTestFeats.h5");  
   } 
 }
