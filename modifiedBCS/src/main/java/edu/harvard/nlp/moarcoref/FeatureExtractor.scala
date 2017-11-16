@@ -18,7 +18,7 @@ import edu.berkeley.nlp.futile.util.Logger
 object FeatureExtractor {
     
   def writeSeparatedFeatsAndOraclePredClustering(smaller:Boolean) {
-    var pfx = (if (smaller) "SMALL" else "BIG");
+    var pfx = MiniDriver.outPath + "/" + (if (smaller) "SMALL" else "BIG");
     Logger.logss("Using conjType = " + MiniDriver.conjType);
     val numberGenderComputer = NumberGenderComputer.readBergsmaLinData(MiniDriver.numberGenderDataPath);
     // require(!MiniDriver.trainOnGold);
@@ -72,7 +72,7 @@ object FeatureExtractor {
     featurizerTrainer.featurizeBasic(trainDocGraphs, pwFeaturizer);
     pwFeaturizer.printFeatureTemplateCounts;
     // write pairwise train features
-    HDF5Pickler.writePWFeats(trainDocGraphs, pwFeatureIndexer.size(), pfx + "-" + MiniDriver.pairwiseFeats + "-" + "pwTrainFeats.h5");
+    TextPickler.writePWFeats(trainDocGraphs, pwFeatureIndexer.size(), pfx + "-" + MiniDriver.pairwiseFeats + "-" + "pwTrainFeats.txt");
 
     // write pw feature mapping
     val printerPW = new PrintWriter(pfx+"-"+ MiniDriver.pairwiseFeats + "-" + "pwMapping.txt");
@@ -95,7 +95,7 @@ object FeatureExtractor {
     TextPickler.writeAnaphFeats(devDocGraphs, pfx + "-" + MiniDriver.pairwiseFeats + "-" + "anaphDevFeats.txt");
     devDocGraphs = devDocs.map(new DocumentGraph(_, false)).sortBy(_.corefDoc.rawDoc.printableDocName);
     featurizerTrainer.featurizeBasic(devDocGraphs,pwFeaturizer);
-    HDF5Pickler.writePWFeats(devDocGraphs, pwFeatureIndexer.size(), pfx + "-" +  MiniDriver.pairwiseFeats + "-" + "pwDevFeats.h5");
+    TextPickler.writePWFeats(devDocGraphs, pwFeatureIndexer.size(), pfx + "-" +  MiniDriver.pairwiseFeats + "-" + "pwDevFeats.txt");
     
     // write dev oracle predicted clustering
     TextPickler.writePredOracleClusterings(devDocGraphs, pfx+"DevOPCs.txt"); 
@@ -110,6 +110,6 @@ object FeatureExtractor {
     TextPickler.writeAnaphFeats(testDocGraphs, pfx + "-" +  MiniDriver.pairwiseFeats + "-" + "anaphTestFeats.txt");
     testDocGraphs = testDocs.map(new DocumentGraph(_, false)).sortBy(_.corefDoc.rawDoc.printableDocName);
     featurizerTrainer.featurizeBasic(testDocGraphs,pwFeaturizer);
-    HDF5Pickler.writePWFeats(testDocGraphs, pwFeatureIndexer.size(), pfx + "-" + MiniDriver.pairwiseFeats + "-" + "pwTestFeats.h5");  
+    TextPickler.writePWFeats(testDocGraphs, pwFeatureIndexer.size(), pfx + "-" + MiniDriver.pairwiseFeats + "-" + "pwTestFeats.txt");  
   } 
 }

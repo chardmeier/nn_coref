@@ -17,6 +17,8 @@ public class MiniDriver implements Runnable {
   public static Language lang = Language.ENGLISH;
   
   // DATA AND PATHS
+  @Option(gloss = "Directory for output files")
+  public static String outPath = ".";
   @Option(gloss = "Path to number/gender data")
   public static String numberGenderDataPath = "gender.data";
   @Option(gloss = "Path to Stanford Coref's animate unigrams")
