@@ -28,6 +28,7 @@ do
     self.wl = wl
 
     local naNet = mu.make_sp_mlp(anaD,Ha,true,false)
+    debugInit(naNet)
     if anaSerFi then
       print("preinit'ing naNet with " .. anaSerFi)
       local preNaNet = torch.load(anaSerFi)
@@ -48,6 +49,7 @@ do
     local pwNet = nn.Sequential()
     local firstLayer = nn.ParallelTable() -- joins all reps
     local anteNet = mu.make_sp_mlp(pwD,Hp,true,true)
+    debugInit(anteNet)
     if anteSerFi then
       print("preinit'ing anteNet with " .. anteSerFi)
       local preAnteNet = torch.load(anteSerFi)
@@ -244,6 +246,7 @@ end
 
 function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,Ha,Hs,H2,
               fl,fn,wl,nEpochs,save,savePfx,cuda,anteSerFi,anaSerFi) 
+  local h5 = hdf5.open("grads.h5", "w")
   local serFi = string.format("models/%s-vanilla-%d-%d.model", savePfx, Hp, Ha)
   local eta0 = 1e-1
   local eta1 = 2e-3
@@ -258,7 +261,10 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
     model.naNet:training()
     model.pwNet:training()
     -- use document sized minibatches
-    for d = 1, pwData.numDocs do
+    -- for d = 1, pwData.numDocs do
+    do
+      local d = 1
+      local p = tostring(d) .. "/"
      -- print(d)
       if d % 200 == 0 then
         print("doc " .. tostring(d))
@@ -277,23 +283,39 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
       
       mu.adagradStep(model.naNet:get(1).weight,
                      model.naNet:get(1).gradWeight,eta0,statez[1])
+      pwrite(h5, p .. "na_1_w/weight", model.naNet:get(1).weight)
+      pwrite(h5, p .. "na_1_w/grad", model.naNet:get(1).gradWeight)
       mu.adagradStep(model.naNet:get(3).bias,
                      model.naNet:get(3).gradBias,eta0,statez[2])
+      pwrite(h5, p .. "na_3_b/bias", model.naNet:get(3).bias)
+      pwrite(h5, p .. "na_3_b/grad", model.naNet:get(3).gradBias)
                       
       mu.adagradStep(model.pwNet:get(1):get(1):get(1).weight,
                      model.pwNet:get(1):get(1):get(1).gradWeight,eta0,statez[3])
+      pwrite(h5, p .. "pw_1_1_1_w/weight", model.pwNet:get(1):get(1):get(1).weight)
+      pwrite(h5, p .. "pw_1_1_1_w/grad", model.pwNet:get(1):get(1):get(1).gradWeight)
       mu.adagradStep(model.pwNet:get(1):get(1):get(3).bias,
                      model.pwNet:get(1):get(1):get(3).gradBias,eta0,statez[4])
+      pwrite(h5, p .. "pw_1_1_3_b/bias", model.pwNet:get(1):get(1):get(3).bias)
+      pwrite(h5, p .. "pw_1_1_3_b/grad", model.pwNet:get(1):get(1):get(3).gradBias)
                       
       mu.adagradStep(model.naNet:get(5).weight,
                      model.naNet:get(5).gradWeight,eta1,statez[5])
+      pwrite(h5, p .. "na_5_w/weight", model.naNet:get(5).weight)
+      pwrite(h5, p .. "na_5_w/grad", model.naNet:get(5).gradWeight)
       mu.adagradStep(model.naNet:get(5).bias,
                      model.naNet:get(5).gradBias,eta1,statez[6])
+      pwrite(h5, p .. "na_5_b/bias", model.naNet:get(5).bias)
+      pwrite(h5, p .. "na_5_b/grad", model.naNet:get(5).gradBias)
                       
       mu.adagradStep(model.pwNet:get(4).weight,
                      model.pwNet:get(4).gradWeight,eta1,statez[7])
+      pwrite(h5, p .. "pw_4_w/weight", model.pwNet:get(4).weight)
+      pwrite(h5, p .. "pw_4_w/grad", model.pwNet:get(4).gradWeight)
       mu.adagradStep(model.pwNet:get(4).bias,
                      model.pwNet:get(4).gradBias,eta1,statez[8])              
+      pwrite(h5, p .. "pw_4_b/bias", model.pwNet:get(4).bias)
+      pwrite(h5, p .. "pw_4_b/grad", model.pwNet:get(4).gradBias)
     end
     if save then
       print("overwriting params...")
@@ -351,21 +373,46 @@ if opts.gpuid >= 0 then
   cutorch.setDevice(opts.gpuid+1)
 end
 
+function debug_data_pw()
+  feats = torch.LongTensor({4, 7, 9, 1, 5, 7, 2, 6, 8, 3, 4, 9, 2, 3, 8, 7, 8, 9})
+  docStarts = torch.LongTensor({0, 6})
+  mentStarts = torch.LongTensor({0, 3, 6, 9, 12, 15, 18})
+  return SpDMPWData.makeFromTensors(feats, docStarts, mentStarts)
+end
+
+function debug_data_ana()
+  numNZ = 3
+  docStarts = torch.LongTensor({0, 4})
+  feats = torch.LongTensor({1, 5, 7, 2, 6, 8, 3, 4, 9, 4, 7, 9})
+  return SpKFDMData(nil, docStarts, numNZ, feats)
+end
+
+function debug_opc()
+  line = "0|1 2|3"
+  return {OPClust(line, 4)}
+end
+
 function main()
   if not opts.loadAndPredict then -- if training, get train data
-    local pwTrData = SpDMPWData.loadFromH5(opts.pwTrFeatPrefix)
+    -- local pwTrData = SpDMPWData.loadFromH5(opts.pwTrFeatPrefix)
+    local pwTrData = debug_data_pw()
     print("read pw train data")
     print("max pw feature is: " .. pwTrData.maxFeat)
-    local anaTrData = SpKFDMData(opts.anaTrFeatPrefix)
+    -- local anaTrData = SpKFDMData(opts.anaTrFeatPrefix)
+    local anaTrData = debug_data_ana()
     print("read anaph train data")
     print("max ana feature is: " .. anaTrData.maxFeat)       
-    local trOPCs = getOPCs(opts.trainClustFile,anaTrData) 
+    -- local trOPCs = getOPCs(opts.trainClustFile,anaTrData) 
+    local trOPCs = debug_opc()
     print("read train clusters")    
-    local pwDevData = SpDMPWData.loadFromH5(opts.pwDevFeatPrefix)
+    -- local pwDevData = SpDMPWData.loadFromH5(opts.pwDevFeatPrefix)
+    local pwDevData = debug_data_pw()
     print("read pw dev data")
-    local anaDevData = SpKFDMData(opts.anaDevFeatPrefix)
+    -- local anaDevData = SpKFDMData(opts.anaDevFeatPrefix)
+    local anaDevData = debug_data_ana()
     print("read anaph dev data")  
-    local devOPCs = getOPCs(opts.devClustFile,anaDevData) 
+    -- local devOPCs = getOPCs(opts.devClustFile,anaDevData) 
+    local devOPCs = debug_opc()
     print("read dev clusters")          
     if opts.gpuid >= 0 then
       for i = 1, #trOPCs do

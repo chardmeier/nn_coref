@@ -99,6 +99,21 @@ function recSutsInit(net,numNZ) -- assuming no module can have weight and childr
   end
 end
 
+function debugInit(net) -- assuming no module can have weight and children
+  if net.weight or net.bias then
+    if net.weight then
+      net.weight:fill(0.1)
+    end
+    if net.bias then
+      net.bias:fill(0.5)
+    end
+  elseif net.modules and #net.modules > 0 then
+    for layer, subnet in ipairs(net.modules) do
+      debugInit(subnet)
+    end
+  end
+end
+
 -- stolen from https://github.com/karpathy/char-rnn/blob/master/util/model_utils.lua
 function model_utils.combine_all_parameters(...)
     --[[ like module:getParameters, but operates on many modules ]]--
