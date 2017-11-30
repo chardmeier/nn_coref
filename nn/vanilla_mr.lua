@@ -296,6 +296,7 @@ cmd:option('-savedPWNetFi', '', 'Saved pairwise network model file (for predicti
 cmd:option('-savedNANetFi', '', 'Saved NA network model file (for prediction)')
 cmd:option('-randomSeed', 2, 'seed to use')
 cmd:option('-useFloat', false, 'use single precision floats')
+cmd:option('-bpfi', '', 'backpointer output file for prediction')
 cmd:text()
 
 -- Parse input options
@@ -354,6 +355,9 @@ function main()
     local naNetFi = opts.savedNANetFi
     print(opts)
     local bpfi = "bps/" .. tostring(os.time()) .. "dev.bps"
+    if opts.bpfi then
+      bpfi = opts.bpfi
+    end
     print("using bpfi: " .. bpfi)
     predictThings(pwNetFi,naNetFi,lstmFi,pwDevData,anaDevData,opts.gpuid >= 0,bpfi)
   end
