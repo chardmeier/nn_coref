@@ -90,7 +90,6 @@ do
     
   
   function VanillaMR:docGrad(d,pwDocBatch,anaDocBatch,OPC,deltTensor,numMents,cdb)
-    debugInit(self.naNet, self.pwNet)
     -- print(self.naNet)
     -- print(self.pwNet)
     -- print(self.pwNet:get(4).weight[1])
@@ -282,6 +281,7 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
   local deltTensor = cuda and torch.ones(1,1):cuda() or torch.ones(1,1)
   local keepGoing = true
   local ep = 1
+  debugInit(model.naNet, model.pwNet)
   while keepGoing do
     print("epoch: " .. tostring(ep))
     model.naNet:training()
@@ -311,45 +311,46 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
                      model.naNet:get(1).gradWeight,eta0,statez[1])
       pwrite(h5, p .. "na_1_w/weight", model.naNet:get(1).weight)
       pwrite(h5, p .. "na_1_w/grad", model.naNet:get(1).weight)
-      print("ha.w\n" .. tostring(model.naNet:get(1).weight))
+      -- print("ha.w\n" .. tostring(model.naNet:get(1).weight))
       mu.adagradStep(model.naNet:get(3).bias,
                      model.naNet:get(3).gradBias,eta0,statez[2])
       pwrite(h5, p .. "na_3_b/bias", model.naNet:get(3).bias)
       pwrite(h5, p .. "na_3_b/grad", model.naNet:get(3).gradBias)
-      print("ha.b\n" .. tostring(model.naNet:get(3).bias))
+      -- print("ha.b\n" .. tostring(model.naNet:get(3).bias))
 
       mu.adagradStep(model.pwNet:get(1):get(1):get(1).weight,
                      model.pwNet:get(1):get(1):get(1).gradWeight,eta0,statez[3])
       pwrite(h5, p .. "pw_1_1_1_w/weight", model.pwNet:get(1):get(1):get(1).weight)
       pwrite(h5, p .. "pw_1_1_1_w/grad", model.pwNet:get(1):get(1):get(1).gradWeight)
-      print("hp.w\n" .. tostring(model.pwNet:get(1):get(1):get(1).weight))
+      -- print("hp.w\n" .. tostring(model.pwNet:get(1):get(1):get(1).weight))
       mu.adagradStep(model.pwNet:get(1):get(1):get(3).bias,
                      model.pwNet:get(1):get(1):get(3).gradBias,eta0,statez[4])
       pwrite(h5, p .. "pw_1_1_3_b/bias", model.pwNet:get(1):get(1):get(3).bias)
       pwrite(h5, p .. "pw_1_1_3_b/grad", model.pwNet:get(1):get(1):get(3).gradBias)
-      print("hp.b\n" .. tostring(model.pwNet:get(1):get(1):get(3).bias))
+      -- print("hp.b\n" .. tostring(model.pwNet:get(1):get(1):get(3).bias))
 
       mu.adagradStep(model.naNet:get(5).weight,
                      model.naNet:get(5).gradWeight,eta1,statez[5])
       pwrite(h5, p .. "na_5_w/weight", model.naNet:get(5).weight)
       pwrite(h5, p .. "na_5_w/grad", model.naNet:get(5).gradWeight)
-      print("eps.w\n" .. tostring(model.naNet:get(5).weight))
+      -- print("eps.w\n" .. tostring(model.naNet:get(5).weight))
       mu.adagradStep(model.naNet:get(5).bias,
                      model.naNet:get(5).gradBias,eta1,statez[6])
       pwrite(h5, p .. "na_5_b/bias", model.naNet:get(5).bias)
       pwrite(h5, p .. "na_5_b/grad", model.naNet:get(5).gradBias)
-      print("eps.b\n" .. tostring(model.naNet:get(5).bias))
+      -- print("eps.b\n" .. tostring(model.naNet:get(5).bias))
 
       mu.adagradStep(model.pwNet:get(4).weight,
                      model.pwNet:get(4).gradWeight,eta1,statez[7])
       pwrite(h5, p .. "pw_4_w/weight", model.pwNet:get(4).weight)
       pwrite(h5, p .. "pw_4_w/grad", model.pwNet:get(4).gradWeight)
       print("ana.w\n" .. tostring(model.pwNet:get(4).weight))
+      print("ana.w grad\n" .. tostring(model.pwNet:get(4).gradWeight))
       mu.adagradStep(model.pwNet:get(4).bias,
                      model.pwNet:get(4).gradBias,eta1,statez[8])              
       pwrite(h5, p .. "pw_4_b/bias", model.pwNet:get(4).bias)
       pwrite(h5, p .. "pw_4_b/grad", model.pwNet:get(4).gradBias)
-      print("ana.b\n" .. tostring(model.pwNet:get(4).bias))
+      -- print("ana.b\n" .. tostring(model.pwNet:get(4).bias))
     end
     if save then
       print("overwriting params...")
