@@ -295,12 +295,17 @@ cmd:option('-loadAndPredict', false, 'Load full model and predict (on dev or tes
 cmd:option('-savedPWNetFi', '', 'Saved pairwise network model file (for prediction)')
 cmd:option('-savedNANetFi', '', 'Saved NA network model file (for prediction)')
 cmd:option('-randomSeed', 2, 'seed to use')
+cmd:option('-useFloat', false, 'use single precision floats')
 cmd:text()
 
 -- Parse input options
 opts = cmd:parse(arg)
 
 random_seed = opts.randomSeed
+
+if opts.randomSeed then
+  torch.setdefaulttensortype('torch.FloatTensor')
+end
 
 if opts.gpuid >= 0 then
   print('using cuda on gpu ' .. opts.gpuid)
