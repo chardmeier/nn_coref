@@ -4,14 +4,16 @@ require 'sparse_doc_data'
 
 local mu = require 'model_utils'
 
+local random_seed = 2
+
 do
 
   local VanillaMR = torch.class('VanillaMR')
 
   function VanillaMR:__init(pwD, Hp, anaD, Ha, fl, fn, wl, cuda, anteSerFi, anaSerFi, dop) 
-    torch.manualSeed(2)
+    torch.manualSeed(random_seed)
     if cuda then
-      cutorch.manualSeed(2)
+      cutorch.manualSeed(random_seed)
     end
 
     self.fl = fl
@@ -128,9 +130,9 @@ do
   local SavedVanillaMR, parent = torch.class('SavedVanillaMR')
 
   function SavedVanillaMR:__init(naNetFi, pwNetFi, cuda) 
-    torch.manualSeed(2)
+    torch.manualSeed(random_seed)
     if cuda then
-      cutorch.manualSeed(2)
+      cutorch.manualSeed(random_seed)
     end
      
     -- forget cuda for now...
@@ -292,16 +294,19 @@ cmd:option('-PT', false, ' pretrain')
 cmd:option('-loadAndPredict', false, 'Load full model and predict (on dev or test)')
 cmd:option('-savedPWNetFi', '', 'Saved pairwise network model file (for prediction)')
 cmd:option('-savedNANetFi', '', 'Saved NA network model file (for prediction)')
+cmd:option('-randomSeed', 2, 'seed to use')
 cmd:text()
 
 -- Parse input options
 opts = cmd:parse(arg)
 
+random_seed = opts.randomSeed
+
 if opts.gpuid >= 0 then
   print('using cuda on gpu ' .. opts.gpuid)
   require 'cutorch'
   require 'cunn'
-  cutorch.manualSeed(2)
+  cutorch.manualSeed(random_seed)
   cutorch.setDevice(opts.gpuid+1)
 end
 
