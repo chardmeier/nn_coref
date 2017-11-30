@@ -253,7 +253,7 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
       torch.save(serFi.."-vanilla-pw", model.pwNet)
       torch.save(serFi.."-vanilla-na", model.naNet)
       local h5 = hdf5.open(serFi..".vanilla.h5", "w")
-      mu.save_weights_to_hdf5(h5, "", model.naNet, model.pwNet)
+      mu.save_weights_to_hdf5(h5, "MentionRankingModel", model.naNet, model.pwNet)
       h5:close()
     end                  
     collectgarbage()
