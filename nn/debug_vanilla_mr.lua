@@ -1,3 +1,5 @@
+require('mobdebug').start()
+
 require 'nn'
 require 'coref_utils'
 require 'sparse_doc_data'
@@ -28,7 +30,6 @@ do
     self.wl = wl
 
     local naNet = mu.make_sp_mlp(anaD,Ha,true,false)
-    debugInit(naNet)
     if anaSerFi then
       print("preinit'ing naNet with " .. anaSerFi)
       local preNaNet = torch.load(anaSerFi)
@@ -49,7 +50,6 @@ do
     local pwNet = nn.Sequential()
     local firstLayer = nn.ParallelTable() -- joins all reps
     local anteNet = mu.make_sp_mlp(pwD,Hp,true,true)
-    debugInit(anteNet)
     if anteSerFi then
       print("preinit'ing anteNet with " .. anteSerFi)
       local preAnteNet = torch.load(anteSerFi)
@@ -89,7 +89,10 @@ do
     
   
   function VanillaMR:docGrad(d,pwDocBatch,anaDocBatch,OPC,deltTensor,numMents,cdb)
-
+    debugInit(self.naNet, self.pwNet)
+    -- print(self.naNet)
+    -- print(self.pwNet)
+    -- print(self.pwNet:get(4).weight[1])
     for m = 2, numMents do -- ignore first guy; always NA 
       local cid = OPC.m2c[m]
       local start = ((m-2)*(m-1))/2 -- one behind first pair for mention m
@@ -97,6 +100,23 @@ do
       local scores = self.pwNet:forward({pwDocBatch:sub(start+1,start+m-1),
           anaDocBatch:sub(m,m):expand(m-1,anaDocBatch:size(2))}):squeeze(2)
       local naScore = self.naNet:forward(anaDocBatch:sub(m,m)):squeeze() -- always 1x1
+      print('ment ' .. tostring(m))
+      print('cid ' .. tostring(cid))
+      print('naScore ' .. tostring(naScore))
+      print('scores\n' .. tostring(scores))
+      -- for i = 1, #self.pwNet.modules do
+      --   local path = "/pw/" .. tostring(i)
+      --   print(path)
+      --   local output = self.pwNet.modules[i].output
+      --   print(type(output))
+      --   if type(output) == 'table' then
+      --     for k, v in pairs(output) do
+      --       print(path .. "/" .. k .. "\n" .. tostring(v))
+      --     end
+      --   else
+      --     pwrite(h5, path, tostring(output))
+      --   end
+      -- end
       -- pick a latent antecedent
       local late = m
       local lateScore = naScore
@@ -105,8 +125,12 @@ do
         lateScore = scores[late]
       end
 
+      print("late " .. tostring(late))
+      print("lateScore " .. tostring(lateScore))
       local pred, delt = simpleMultLAArgmax(OPC,scores,m,lateScore,naScore,0,self.fl,self.fn,self.wl)
-          
+
+      print("pred " .. tostring(pred))
+      print("delt " .. tostring(delt))
       if delt > 0 then
         deltTensor[1][1] = delt
         -- gradients involve adding predicted thing and subtracting latent thing
@@ -130,6 +154,7 @@ do
           self.naNet:backward(anaDocBatch:sub(m,m),-deltTensor)
         end
       end  -- end if delt > 0
+      print("\n\n")
     end -- end for m
   end
 
@@ -280,42 +305,50 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
       model.naNet:zeroGradParameters()
       
       model:docGrad(d,pwDocBatch,anaDocBatch,trOPCs[d],deltTensor,anaData:numMents(d),cdb)
-      
+
       mu.adagradStep(model.naNet:get(1).weight,
                      model.naNet:get(1).gradWeight,eta0,statez[1])
       pwrite(h5, p .. "na_1_w/weight", model.naNet:get(1).weight)
       pwrite(h5, p .. "na_1_w/grad", model.naNet:get(1).gradWeight)
+      print("ha.w\n" .. tostring(model.naNet:get(1).gradWeight))
       mu.adagradStep(model.naNet:get(3).bias,
                      model.naNet:get(3).gradBias,eta0,statez[2])
       pwrite(h5, p .. "na_3_b/bias", model.naNet:get(3).bias)
       pwrite(h5, p .. "na_3_b/grad", model.naNet:get(3).gradBias)
-                      
+      print("ha.b\n" .. tostring(model.naNet:get(3).gradBias))
+
       mu.adagradStep(model.pwNet:get(1):get(1):get(1).weight,
                      model.pwNet:get(1):get(1):get(1).gradWeight,eta0,statez[3])
       pwrite(h5, p .. "pw_1_1_1_w/weight", model.pwNet:get(1):get(1):get(1).weight)
       pwrite(h5, p .. "pw_1_1_1_w/grad", model.pwNet:get(1):get(1):get(1).gradWeight)
+      print("hp.w\n" .. tostring(model.pwNet:get(1):get(1):get(1).gradWeight))
       mu.adagradStep(model.pwNet:get(1):get(1):get(3).bias,
                      model.pwNet:get(1):get(1):get(3).gradBias,eta0,statez[4])
       pwrite(h5, p .. "pw_1_1_3_b/bias", model.pwNet:get(1):get(1):get(3).bias)
       pwrite(h5, p .. "pw_1_1_3_b/grad", model.pwNet:get(1):get(1):get(3).gradBias)
-                      
+      print("hp.b\n" .. tostring(model.pwNet:get(1):get(1):get(3).gradBias))
+
       mu.adagradStep(model.naNet:get(5).weight,
                      model.naNet:get(5).gradWeight,eta1,statez[5])
       pwrite(h5, p .. "na_5_w/weight", model.naNet:get(5).weight)
       pwrite(h5, p .. "na_5_w/grad", model.naNet:get(5).gradWeight)
+      print("eps.w\n" .. tostring(model.naNet:get(5).gradWeight))
       mu.adagradStep(model.naNet:get(5).bias,
                      model.naNet:get(5).gradBias,eta1,statez[6])
       pwrite(h5, p .. "na_5_b/bias", model.naNet:get(5).bias)
       pwrite(h5, p .. "na_5_b/grad", model.naNet:get(5).gradBias)
-                      
+      print("eps.b\n" .. tostring(model.naNet:get(5).gradBias))
+
       mu.adagradStep(model.pwNet:get(4).weight,
                      model.pwNet:get(4).gradWeight,eta1,statez[7])
       pwrite(h5, p .. "pw_4_w/weight", model.pwNet:get(4).weight)
       pwrite(h5, p .. "pw_4_w/grad", model.pwNet:get(4).gradWeight)
+      print("ana.w\n" .. tostring(model.pwNet:get(4).gradWeight))
       mu.adagradStep(model.pwNet:get(4).bias,
                      model.pwNet:get(4).gradBias,eta1,statez[8])              
       pwrite(h5, p .. "pw_4_b/bias", model.pwNet:get(4).bias)
       pwrite(h5, p .. "pw_4_b/grad", model.pwNet:get(4).gradBias)
+      print("ana.b\n" .. tostring(model.pwNet:get(4).gradBias))
     end
     if save then
       print("overwriting params...")
@@ -388,7 +421,7 @@ function debug_data_ana()
 end
 
 function debug_opc()
-  line = "0|1 2|3"
+  line = "0 1|2 3"
   return {OPClust(line, 4)}
 end
 

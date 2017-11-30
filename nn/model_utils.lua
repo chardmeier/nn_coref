@@ -99,19 +99,18 @@ function recSutsInit(net,numNZ) -- assuming no module can have weight and childr
   end
 end
 
-function debugInit(net) -- assuming no module can have weight and children
-  if net.weight or net.bias then
-    if net.weight then
-      net.weight:fill(0.1)
-    end
-    if net.bias then
-      net.bias:fill(0.5)
-    end
-  elseif net.modules and #net.modules > 0 then
-    for layer, subnet in ipairs(net.modules) do
-      debugInit(subnet)
-    end
-  end
+function debugInit(naNet, pwNet) -- assuming no module can have weight and children
+  torch.manualSeed(15)
+  naNet:get(1).weight = torch.randn(naNet:get(1).weight:size())
+  naNet:get(3).bias = torch.randn(naNet:get(3).bias:size())
+  naNet:get(5).weight = torch.randn(naNet:get(5).weight:size())
+  naNet:get(5).bias = torch.randn(naNet:get(5).bias:size())
+  pwNet:get(1):get(1):get(1).weight = torch.randn(pwNet:get(1):get(1):get(1).weight:size())
+  pwNet:get(1):get(1):get(3).bias = torch.randn(pwNet:get(1):get(1):get(3).bias:size())
+  pwNet:get(4).weight = torch.randn(pwNet:get(4).weight:size())
+  pwNet:get(4).bias = torch.randn(pwNet:get(4).bias:size())
+  pwNet:get(1):get(2):get(1):share(naNet:get(1), 'weight', 'gradWeight')
+  pwNet:get(1):get(2):get(3):share(naNet:get(3), 'bias', 'gradBias')
 end
 
 -- stolen from https://github.com/karpathy/char-rnn/blob/master/util/model_utils.lua
