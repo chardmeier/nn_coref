@@ -154,13 +154,13 @@ do
   end
   
   function SpKFDMData:docBatch(d)
-    print("doc batch " .. tostring(d))
-    print("from " .. tostring(self.docStarts[d]+1))
-    print("which is " .. tostring(self.feats[self.docStarts[d]+1]))
-    print("to " .. tostring(self.docStarts[d+1]))
-    print("which is " .. tostring(self.feats[self.docStarts[d+1]]))
+    -- print("doc batch " .. tostring(d))
+    -- print("from " .. tostring(self.docStarts[d]+1))
+    -- print("which is " .. tostring(self.feats[self.docStarts[d]+1]))
+    -- print("to " .. tostring(self.docStarts[d+1]))
+    -- print("which is " .. tostring(self.feats[self.docStarts[d+1]]))
     local r = self.feats:sub(self.docStarts[d]+1,self.docStarts[d+1])
-    print(r)
+    -- print(r)
     return r
   end
 

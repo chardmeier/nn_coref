@@ -100,10 +100,10 @@ do
       local scores = self.pwNet:forward({pwDocBatch:sub(start+1,start+m-1),
           anaDocBatch:sub(m,m):expand(m-1,anaDocBatch:size(2))}):squeeze(2)
       local naScore = self.naNet:forward(anaDocBatch:sub(m,m)):squeeze() -- always 1x1
-      print('ment ' .. tostring(m))
-      print('cid ' .. tostring(cid))
-      print('naScore ' .. tostring(naScore))
-      print('scores\n' .. tostring(scores))
+      -- print('ment ' .. tostring(m))
+      -- print('cid ' .. tostring(cid))
+      -- print('naScore ' .. tostring(naScore))
+      -- print('scores\n' .. tostring(scores))
       -- for i = 1, #self.pwNet.modules do
       --   local path = "/pw/" .. tostring(i)
       --   print(path)
@@ -125,12 +125,12 @@ do
         lateScore = scores[late]
       end
 
-      print("late " .. tostring(late))
-      print("lateScore " .. tostring(lateScore))
+      -- print("late " .. tostring(late))
+      -- print("lateScore " .. tostring(lateScore))
       local pred, delt = simpleMultLAArgmax(OPC,scores,m,lateScore,naScore,0,self.fl,self.fn,self.wl)
 
-      print("pred " .. tostring(pred))
-      print("delt " .. tostring(delt))
+      -- print("pred " .. tostring(pred))
+      -- print("delt " .. tostring(delt))
       if delt > 0 then
         deltTensor[1][1] = delt
         -- gradients involve adding predicted thing and subtracting latent thing
@@ -154,7 +154,7 @@ do
           self.naNet:backward(anaDocBatch:sub(m,m),-deltTensor)
         end
       end  -- end if delt > 0
-      print("\n\n")
+      -- print("\n\n")
     end -- end for m
   end
 
@@ -269,6 +269,17 @@ function predictThings(pwNetFi,naNetFi,lstmFi,pwDevData,anaDevData,cuda,bpfi)
 end
 
 
+function show(lbl, data)
+  if string.sub(lbl, -1) == 'w' then
+    d = data.weight
+    g = data.gradWeight
+  else
+    d = data.bias
+    g = data.gradBias
+  end
+  print(lbl .. ' ' .. tostring(torch.norm(d)) .. ' ' .. tostring(torch.norm(g)))
+end
+
 function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,Ha,Hs,H2,
               fl,fn,wl,nEpochs,save,savePfx,cuda,anteSerFi,anaSerFi) 
   -- local h5 = hdf5.open("grads.h5", "w")
@@ -287,10 +298,7 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
     model.naNet:training()
     model.pwNet:training()
     -- use document sized minibatches
-    -- for d = 1, pwData.numDocs do
-    do
-      local d = 1
-      local p = tostring(d) .. "/"
+    for d = 1, pwData.numDocs do
      -- print(d)
       if d % 200 == 0 then
         print("doc " .. tostring(d))
@@ -311,46 +319,45 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
                      model.naNet:get(1).gradWeight,eta0,statez[1])
       pwrite(h5, p .. "na_1_w/weight", model.naNet:get(1).weight)
       pwrite(h5, p .. "na_1_w/grad", model.naNet:get(1).weight)
-      -- print("ha.w\n" .. tostring(model.naNet:get(1).weight))
+      show("ha.w", model.naNet:get(1))
       mu.adagradStep(model.naNet:get(3).bias,
                      model.naNet:get(3).gradBias,eta0,statez[2])
       pwrite(h5, p .. "na_3_b/bias", model.naNet:get(3).bias)
       pwrite(h5, p .. "na_3_b/grad", model.naNet:get(3).gradBias)
-      -- print("ha.b\n" .. tostring(model.naNet:get(3).bias))
+      show("ha.b", model.naNet:get(3))
 
       mu.adagradStep(model.pwNet:get(1):get(1):get(1).weight,
                      model.pwNet:get(1):get(1):get(1).gradWeight,eta0,statez[3])
       pwrite(h5, p .. "pw_1_1_1_w/weight", model.pwNet:get(1):get(1):get(1).weight)
       pwrite(h5, p .. "pw_1_1_1_w/grad", model.pwNet:get(1):get(1):get(1).gradWeight)
-      -- print("hp.w\n" .. tostring(model.pwNet:get(1):get(1):get(1).weight))
+      show("hp.w", model.pwNet:get(1):get(1):get(1))
       mu.adagradStep(model.pwNet:get(1):get(1):get(3).bias,
                      model.pwNet:get(1):get(1):get(3).gradBias,eta0,statez[4])
       pwrite(h5, p .. "pw_1_1_3_b/bias", model.pwNet:get(1):get(1):get(3).bias)
       pwrite(h5, p .. "pw_1_1_3_b/grad", model.pwNet:get(1):get(1):get(3).gradBias)
-      -- print("hp.b\n" .. tostring(model.pwNet:get(1):get(1):get(3).bias))
+      show("hp.b", model.pwNet:get(1):get(1):get(3))
 
       mu.adagradStep(model.naNet:get(5).weight,
                      model.naNet:get(5).gradWeight,eta1,statez[5])
       pwrite(h5, p .. "na_5_w/weight", model.naNet:get(5).weight)
       pwrite(h5, p .. "na_5_w/grad", model.naNet:get(5).gradWeight)
-      -- print("eps.w\n" .. tostring(model.naNet:get(5).weight))
+      show("eps.w", model.naNet:get(5))
       mu.adagradStep(model.naNet:get(5).bias,
                      model.naNet:get(5).gradBias,eta1,statez[6])
       pwrite(h5, p .. "na_5_b/bias", model.naNet:get(5).bias)
       pwrite(h5, p .. "na_5_b/grad", model.naNet:get(5).gradBias)
-      -- print("eps.b\n" .. tostring(model.naNet:get(5).bias))
+      show("eps.b", model.naNet:get(5))
 
       mu.adagradStep(model.pwNet:get(4).weight,
                      model.pwNet:get(4).gradWeight,eta1,statez[7])
       pwrite(h5, p .. "pw_4_w/weight", model.pwNet:get(4).weight)
       pwrite(h5, p .. "pw_4_w/grad", model.pwNet:get(4).gradWeight)
-      print("ana.w\n" .. tostring(model.pwNet:get(4).weight))
-      print("ana.w grad\n" .. tostring(model.pwNet:get(4).gradWeight))
+      show("ana.w", model.pwNet:get(4))
       mu.adagradStep(model.pwNet:get(4).bias,
                      model.pwNet:get(4).gradBias,eta1,statez[8])              
       pwrite(h5, p .. "pw_4_b/bias", model.pwNet:get(4).bias)
       pwrite(h5, p .. "pw_4_b/grad", model.pwNet:get(4).gradBias)
-      -- print("ana.b\n" .. tostring(model.pwNet:get(4).bias))
+      show("ana.b", model.pwNet:get(4))
     end
     if save then
       print("overwriting params...")
@@ -429,25 +436,19 @@ end
 
 function main()
   if not opts.loadAndPredict then -- if training, get train data
-    -- local pwTrData = SpDMPWData.loadFromH5(opts.pwTrFeatPrefix)
-    local pwTrData = debug_data_pw()
+    local pwTrData = SpDMPWData.loadFromH5(opts.pwTrFeatPrefix)
     print("read pw train data")
     print("max pw feature is: " .. pwTrData.maxFeat)
-    -- local anaTrData = SpKFDMData(opts.anaTrFeatPrefix)
-    local anaTrData = debug_data_ana()
+    local anaTrData = SpKFDMData(opts.anaTrFeatPrefix)
     print("read anaph train data")
     print("max ana feature is: " .. anaTrData.maxFeat)       
-    -- local trOPCs = getOPCs(opts.trainClustFile,anaTrData) 
-    local trOPCs = debug_opc()
+    local trOPCs = getOPCs(opts.trainClustFile,anaTrData)
     print("read train clusters")    
-    -- local pwDevData = SpDMPWData.loadFromH5(opts.pwDevFeatPrefix)
-    local pwDevData = debug_data_pw()
+    local pwDevData = SpDMPWData.loadFromH5(opts.pwDevFeatPrefix)
     print("read pw dev data")
-    -- local anaDevData = SpKFDMData(opts.anaDevFeatPrefix)
-    local anaDevData = debug_data_ana()
+    local anaDevData = SpKFDMData(opts.anaDevFeatPrefix)
     print("read anaph dev data")  
-    -- local devOPCs = getOPCs(opts.devClustFile,anaDevData) 
-    local devOPCs = debug_opc()
+    local devOPCs = getOPCs(opts.devClustFile,anaDevData)
     print("read dev clusters")          
     if opts.gpuid >= 0 then
       for i = 1, #trOPCs do
