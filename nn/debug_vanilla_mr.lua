@@ -317,46 +317,46 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
 
       mu.adagradStep(model.naNet:get(1).weight,
                      model.naNet:get(1).gradWeight,eta0,statez[1])
-      pwrite(h5, p .. "na_1_w/weight", model.naNet:get(1).weight)
-      pwrite(h5, p .. "na_1_w/grad", model.naNet:get(1).weight)
+      -- pwrite(h5, p .. "na_1_w/weight", model.naNet:get(1).weight)
+      -- pwrite(h5, p .. "na_1_w/grad", model.naNet:get(1).weight)
       show("ha.w", model.naNet:get(1))
       mu.adagradStep(model.naNet:get(3).bias,
                      model.naNet:get(3).gradBias,eta0,statez[2])
-      pwrite(h5, p .. "na_3_b/bias", model.naNet:get(3).bias)
-      pwrite(h5, p .. "na_3_b/grad", model.naNet:get(3).gradBias)
+      -- pwrite(h5, p .. "na_3_b/bias", model.naNet:get(3).bias)
+      -- pwrite(h5, p .. "na_3_b/grad", model.naNet:get(3).gradBias)
       show("ha.b", model.naNet:get(3))
 
       mu.adagradStep(model.pwNet:get(1):get(1):get(1).weight,
                      model.pwNet:get(1):get(1):get(1).gradWeight,eta0,statez[3])
-      pwrite(h5, p .. "pw_1_1_1_w/weight", model.pwNet:get(1):get(1):get(1).weight)
-      pwrite(h5, p .. "pw_1_1_1_w/grad", model.pwNet:get(1):get(1):get(1).gradWeight)
+      -- pwrite(h5, p .. "pw_1_1_1_w/weight", model.pwNet:get(1):get(1):get(1).weight)
+      -- pwrite(h5, p .. "pw_1_1_1_w/grad", model.pwNet:get(1):get(1):get(1).gradWeight)
       show("hp.w", model.pwNet:get(1):get(1):get(1))
       mu.adagradStep(model.pwNet:get(1):get(1):get(3).bias,
                      model.pwNet:get(1):get(1):get(3).gradBias,eta0,statez[4])
-      pwrite(h5, p .. "pw_1_1_3_b/bias", model.pwNet:get(1):get(1):get(3).bias)
-      pwrite(h5, p .. "pw_1_1_3_b/grad", model.pwNet:get(1):get(1):get(3).gradBias)
+      -- pwrite(h5, p .. "pw_1_1_3_b/bias", model.pwNet:get(1):get(1):get(3).bias)
+      -- pwrite(h5, p .. "pw_1_1_3_b/grad", model.pwNet:get(1):get(1):get(3).gradBias)
       show("hp.b", model.pwNet:get(1):get(1):get(3))
 
       mu.adagradStep(model.naNet:get(5).weight,
                      model.naNet:get(5).gradWeight,eta1,statez[5])
-      pwrite(h5, p .. "na_5_w/weight", model.naNet:get(5).weight)
-      pwrite(h5, p .. "na_5_w/grad", model.naNet:get(5).gradWeight)
+      -- pwrite(h5, p .. "na_5_w/weight", model.naNet:get(5).weight)
+      -- pwrite(h5, p .. "na_5_w/grad", model.naNet:get(5).gradWeight)
       show("eps.w", model.naNet:get(5))
       mu.adagradStep(model.naNet:get(5).bias,
                      model.naNet:get(5).gradBias,eta1,statez[6])
-      pwrite(h5, p .. "na_5_b/bias", model.naNet:get(5).bias)
-      pwrite(h5, p .. "na_5_b/grad", model.naNet:get(5).gradBias)
+      -- pwrite(h5, p .. "na_5_b/bias", model.naNet:get(5).bias)
+      -- pwrite(h5, p .. "na_5_b/grad", model.naNet:get(5).gradBias)
       show("eps.b", model.naNet:get(5))
 
       mu.adagradStep(model.pwNet:get(4).weight,
                      model.pwNet:get(4).gradWeight,eta1,statez[7])
-      pwrite(h5, p .. "pw_4_w/weight", model.pwNet:get(4).weight)
-      pwrite(h5, p .. "pw_4_w/grad", model.pwNet:get(4).gradWeight)
+      -- pwrite(h5, p .. "pw_4_w/weight", model.pwNet:get(4).weight)
+      -- pwrite(h5, p .. "pw_4_w/grad", model.pwNet:get(4).gradWeight)
       show("ana.w", model.pwNet:get(4))
       mu.adagradStep(model.pwNet:get(4).bias,
-                     model.pwNet:get(4).gradBias,eta1,statez[8])              
-      pwrite(h5, p .. "pw_4_b/bias", model.pwNet:get(4).bias)
-      pwrite(h5, p .. "pw_4_b/grad", model.pwNet:get(4).gradBias)
+                     model.pwNet:get(4).gradBias,eta1,statez[8])
+      -- pwrite(h5, p .. "pw_4_b/bias", model.pwNet:get(4).bias)
+      -- pwrite(h5, p .. "pw_4_b/grad", model.pwNet:get(4).gradBias)
       show("ana.b", model.pwNet:get(4))
     end
     if save then
