@@ -93,17 +93,21 @@ do
     -- print(self.naNet)
     -- print(self.pwNet)
     -- print(self.pwNet:get(4).weight[1])
-    for m = 2, numMents do -- ignore first guy; always NA 
+    local allscores = torch.zeros(numMents, numMents)
+    local cost_per_example = torch.zeros(numMents)
+    local loss_per_example = torch.zeros(numMents)
+    local loss = .0
+    for m = 2, numMents do -- ignore first guy; always NA
       local cid = OPC.m2c[m]
       local start = ((m-2)*(m-1))/2 -- one behind first pair for mention m
       
       local scores = self.pwNet:forward({pwDocBatch:sub(start+1,start+m-1),
           anaDocBatch:sub(m,m):expand(m-1,anaDocBatch:size(2))}):squeeze(2)
       local naScore = self.naNet:forward(anaDocBatch:sub(m,m)):squeeze() -- always 1x1
-      -- print('ment ' .. tostring(m))
-      -- print('cid ' .. tostring(cid))
-      -- print('naScore ' .. tostring(naScore))
-      -- print('scores\n' .. tostring(scores))
+      allscores[m][m] = naScore
+        for k = 1, m-1 do
+            allscores[m][k] = scores[k]
+        end
       -- for i = 1, #self.pwNet.modules do
       --   local path = "/pw/" .. tostring(i)
       --   print(path)
@@ -129,9 +133,17 @@ do
       -- print("lateScore " .. tostring(lateScore))
       local pred, delt = simpleMultLAArgmax(OPC,scores,m,lateScore,naScore,0,self.fl,self.fn,self.wl)
 
+      cost_per_example[m] = delt
       -- print("pred " .. tostring(pred))
       -- print("delt " .. tostring(delt))
       if delt > 0 then
+        local predScore = naScore
+        if pred ~= m then
+          predScore = scores[pred]
+        end
+        local my_loss = delt * (1.0 - lateScore + predScore)
+        loss = loss + my_loss
+        loss_per_example[m] = my_loss
         deltTensor[1][1] = delt
         -- gradients involve adding predicted thing and subtracting latent thing
         if pred ~= m then
@@ -156,6 +168,7 @@ do
       end  -- end if delt > 0
       -- print("\n\n")
     end -- end for m
+    print('loss: ' .. tostring(loss))
   end
 
 end
@@ -293,19 +306,28 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
   local keepGoing = true
   local ep = 1
   debugInit(model.naNet, model.pwNet)
+  show("ha.w", model.naNet:get(1))
+  show("ha.b", model.naNet:get(3))
+  show("hp.w", model.pwNet:get(1):get(1):get(1))
+  show("hp.b", model.pwNet:get(1):get(1):get(3))
+  show("eps.w", model.naNet:get(5))
+  show("eps.b", model.naNet:get(5))
+  show("ana.w", model.pwNet:get(4))
+  show("ana.b", model.pwNet:get(4))
   while keepGoing do
     print("epoch: " .. tostring(ep))
     model.naNet:training()
     model.pwNet:training()
     -- use document sized minibatches
     for d = 1, pwData.numDocs do
-     -- print(d)
+     print("doc " .. tostring(d))
       if d % 200 == 0 then
-        print("doc " .. tostring(d))
+        -- print("doc " .. tostring(d))
         collectgarbage()
       end 
       local pwDocBatch = pwData:getDocBatch(d)
       local anaDocBatch = anaData:docBatch(d) -- i know, i know...
+      print(tostring(anaDocBatch:size()[1]) .. ' mentions')
       if cuda then
         pwDocBatch = pwDocBatch:cuda()
         anaDocBatch = anaDocBatch:cuda()
@@ -435,6 +457,7 @@ function debug_opc()
 end
 
 function main()
+    torch.setdefaulttensortype('torch.FloatTensor')
   if not opts.loadAndPredict then -- if training, get train data
     local pwTrData = SpDMPWData.loadFromH5(opts.pwTrFeatPrefix)
     print("read pw train data")
