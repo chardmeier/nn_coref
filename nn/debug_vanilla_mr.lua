@@ -252,7 +252,7 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
   local statez = {{},{},{},{},{},{},{},{}}
   local deltTensor = cuda and torch.ones(1,1):cuda() or torch.ones(1,1)
   local keepGoing = true
-  local h5 = hdf5.open(fname, 'w')
+  local h5 = hdf5.open('weights.h5', 'w')
   mu.save_weights_to_hdf5(h5, '0', model.naNet, model.pwNet)
   local ep = 1
   while keepGoing do
