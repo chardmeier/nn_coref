@@ -212,7 +212,7 @@ function model_utils.save_weights_to_hdf5(h5, prefix, naNet, pwNet)
     h5:write(prefix .. '/ana_model.hp_model.embedding.weight', pwNet:get(1):get(1):get(1).weight)
     h5:write(prefix .. '/ana_model.hp_model.bias', pwNet:get(1):get(1):get(3).bias)
     h5:write(prefix .. '/ana_model.ana_scoring_model.0.weight', pwNet:get(4).weight)
-    h5:write(prefix .. '/ana_model.ana_scoring_model.0.bias', pwNet:get(4).weight)
+    h5:write(prefix .. '/ana_model.ana_scoring_model.0.bias', pwNet:get(4).bias)
 end
 
 return model_utils
