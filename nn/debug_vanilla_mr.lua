@@ -252,6 +252,8 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
   local statez = {{},{},{},{},{},{},{},{}}
   local deltTensor = cuda and torch.ones(1,1):cuda() or torch.ones(1,1)
   local keepGoing = true
+  local h5name = 'weights.h5'
+  model_utils.save_weights_to_hdf5(h5name, '0', model.naNet, model.pwNet)
   local ep = 1
   while keepGoing do
     print("epoch: " .. tostring(ep))
@@ -293,7 +295,9 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
       mu.adagradStep(model.pwNet:get(4).weight,
                      model.pwNet:get(4).gradWeight,eta1,statez[7])
       mu.adagradStep(model.pwNet:get(4).bias,
-                     model.pwNet:get(4).gradBias,eta1,statez[8])              
+                     model.pwNet:get(4).gradBias,eta1,statez[8])
+
+      model_utils.save_weights_to_hdf5(h5name, tostring(ep), model.naNet, model.pwNet)
     end
     if save then
       print("overwriting params...")
