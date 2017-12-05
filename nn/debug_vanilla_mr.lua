@@ -296,10 +296,7 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
                      model.pwNet:get(4).gradWeight,eta1,statez[7])
       mu.adagradStep(model.pwNet:get(4).bias,
                      model.pwNet:get(4).gradBias,eta1,statez[8])
-
-      mu.save_weights_to_hdf5(h5, tostring(ep), model.naNet, model.pwNet)
     end
-    h5:close()
     if save then
       print("overwriting params...")
       torch.save(serFi.."-vanilla-pw", model.pwNet)
@@ -308,9 +305,11 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
     collectgarbage()
     if ep >= nEpochs then
       keepGoing = false
-    end    
+    end
+    mu.save_weights_to_hdf5(h5, tostring(ep), model.naNet, model.pwNet)
     ep = ep + 1
   end -- end while keepGoing
+  h5:close()
 end
 
 -------------------------------------------------------------------------------------------------
