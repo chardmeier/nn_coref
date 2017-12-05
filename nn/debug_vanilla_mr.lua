@@ -356,6 +356,7 @@ if opts.gpuid >= 0 then
 end
 
 function main()
+  torch.setdefaulttensortype('torch.FloatTensor')
   if not opts.loadAndPredict then -- if training, get train data
     local pwTrData = SpDMPWData.loadFromH5(opts.pwTrFeatPrefix)
     print("read pw train data")
