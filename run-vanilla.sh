@@ -16,4 +16,5 @@ th=$USERAPPL/torch/install/bin/th
 export LD_LIBRARY_PATH=$CUDALIB
 
 cd $HOME/coref/nn_coref/nn
-$th vanilla_mr.lua -gpuid $CUDA_VISIBLE_DEVICES -Ha 128 -save
+$th vanilla_mr.lua -gpuid $CUDA_VISIBLE_DEVICES -Ha 128 -save "$@"
+
