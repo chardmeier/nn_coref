@@ -8,8 +8,7 @@ require 'hdf5'
 local mu = require 'model_utils'
 
 function pwrite(h5, path, val)
-  -- local status, err = pcall(h5.write, h5, path, val)
-  local status = true
+  local status, err = pcall(h5.write, h5, path, val)
   if not status then
     print("failed writing " .. path)
     print(err)
@@ -202,12 +201,13 @@ do
 
     -- for d = 1, pwDevData.numDocs do
     do
-      local d = 2 -- only do second doc
+      local d = 1 -- only do second doc
       if d % 100 == 0 then
         print("dev doc " .. tostring(d))
         collectgarbage()
       end
       local numMents = anaDevData:numMents(d)
+      local allscores = torch.zeros(numMents, numMents)
       ofi:write("0") -- predict first thing links to itself always 
       
       local pwDocBatch = pwDevData:getDocBatch(d)
@@ -241,7 +241,9 @@ do
         end
 
         local naScore = self.naNet:forward(anaDocBatch:sub(m,m)):squeeze()
-      
+        allscores[m][m] = naScore
+        allscores[{{m},{1,m-1}}] = scores
+
         pwrite(h5, mention_path .. "/na_features", anaDocBatch:sub(m,m))
         pwrite(h5, mention_path .. "/na_score", torch.FloatTensor({naScore}))
 
@@ -264,7 +266,8 @@ do
           pred[1] = m
         end
         ofi:write(" ",tostring(pred[1]-1))
-      end 
+      end
+      pwrite(h5, "/allscores", allscores)
       ofi:write("\n")
     end
     ofi:close()
