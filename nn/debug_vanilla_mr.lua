@@ -8,7 +8,7 @@ require 'hdf5'
 local mu = require 'model_utils'
 
 function pwrite(h5, path, val)
-  local status, err = pcall(h5.write, h5, path, val)
+  local status, err = pcall(h5.write, h5, path, val:float())
   if not status then
     print("failed writing " .. path)
     print(err)
