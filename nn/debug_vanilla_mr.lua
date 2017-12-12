@@ -1,4 +1,4 @@
-require('mobdebug').start()
+-- require('mobdebug').start()
 
 require 'nn'
 require 'coref_utils'
@@ -242,7 +242,7 @@ do
 
         local naScore = self.naNet:forward(anaDocBatch:sub(m,m)):squeeze()
         allscores[m][m] = naScore
-        allscores[{{m},{1,m-1}}] = scores
+        allscores[{{m},{1,m-1}}] = scores:float()
 
         pwrite(h5, mention_path .. "/na_features", anaDocBatch:sub(m,m))
         pwrite(h5, mention_path .. "/na_score", torch.FloatTensor({naScore}))
