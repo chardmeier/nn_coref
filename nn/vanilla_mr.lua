@@ -4,14 +4,16 @@ require 'sparse_doc_data'
 
 local mu = require 'model_utils'
 
+local random_seed = 2
+
 do
 
   local VanillaMR = torch.class('VanillaMR')
 
   function VanillaMR:__init(pwD, Hp, anaD, Ha, fl, fn, wl, cuda, anteSerFi, anaSerFi, dop) 
-    torch.manualSeed(2)
+    torch.manualSeed(random_seed)
     if cuda then
-      cutorch.manualSeed(2)
+      cutorch.manualSeed(random_seed)
     end
 
     self.fl = fl
@@ -128,9 +130,9 @@ do
   local SavedVanillaMR, parent = torch.class('SavedVanillaMR')
 
   function SavedVanillaMR:__init(naNetFi, pwNetFi, cuda) 
-    torch.manualSeed(2)
+    torch.manualSeed(random_seed)
     if cuda then
-      cutorch.manualSeed(2)
+      cutorch.manualSeed(random_seed)
     end
      
     -- forget cuda for now...
@@ -250,6 +252,9 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
       print("overwriting params...")
       torch.save(serFi.."-vanilla-pw", model.pwNet)
       torch.save(serFi.."-vanilla-na", model.naNet)
+      local h5 = hdf5.open(serFi..".vanilla.h5", "w")
+      mu.save_weights_to_hdf5(h5, "MentionRankingModel", model.naNet, model.pwNet)
+      h5:close()
     end                  
     collectgarbage()
     if ep >= nEpochs then
@@ -289,16 +294,25 @@ cmd:option('-PT', false, ' pretrain')
 cmd:option('-loadAndPredict', false, 'Load full model and predict (on dev or test)')
 cmd:option('-savedPWNetFi', '', 'Saved pairwise network model file (for prediction)')
 cmd:option('-savedNANetFi', '', 'Saved NA network model file (for prediction)')
+cmd:option('-randomSeed', 2, 'seed to use')
+cmd:option('-useFloat', false, 'use single precision floats')
+cmd:option('-bpfi', '', 'backpointer output file for prediction')
 cmd:text()
 
 -- Parse input options
 opts = cmd:parse(arg)
 
+random_seed = opts.randomSeed
+
+if opts.randomSeed then
+  torch.setdefaulttensortype('torch.FloatTensor')
+end
+
 if opts.gpuid >= 0 then
   print('using cuda on gpu ' .. opts.gpuid)
   require 'cutorch'
   require 'cunn'
-  cutorch.manualSeed(2)
+  cutorch.manualSeed(random_seed)
   cutorch.setDevice(opts.gpuid+1)
 end
 
@@ -341,6 +355,9 @@ function main()
     local naNetFi = opts.savedNANetFi
     print(opts)
     local bpfi = "bps/" .. tostring(os.time()) .. "dev.bps"
+    if opts.bpfi then
+      bpfi = opts.bpfi
+    end
     print("using bpfi: " .. bpfi)
     predictThings(pwNetFi,naNetFi,lstmFi,pwDevData,anaDevData,opts.gpuid >= 0,bpfi)
   end
