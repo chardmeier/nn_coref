@@ -206,6 +206,9 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
   local deltTensor = cuda and torch.ones(1,1):cuda() or torch.ones(1,1)
   local keepGoing = true
   local ep = 1
+  local i_h5 = hdf5.open(serFi..".init.h5", "w")
+  mu.save_weights_to_hdf5(i_h5, "MentionRankingModel", model.naNet, model.pwNet)
+  i_h5:close()
   while keepGoing do
     print("epoch: " .. tostring(ep))
     model.naNet:training()
