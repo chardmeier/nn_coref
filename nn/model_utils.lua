@@ -218,6 +218,16 @@ function model_utils.combine_all_parameters(...)
     return flatParameters, flatGradParameters
 end
 
-
+function model_utils.save_weights_to_hdf5(h5, prefix, naNet, pwNet)
+    print('saving model to prefix ' .. prefix)
+    h5:write(prefix .. '/eps_model.ha_model.embedding.weight', naNet:get(1).weight:float())
+    h5:write(prefix .. '/eps_model.ha_model.bias', naNet:get(3).bias:float())
+    h5:write(prefix .. '/eps_model.eps_scoring_model.weight', naNet:get(5).weight:float())
+    h5:write(prefix .. '/eps_model.eps_scoring_model.bias', naNet:get(5).bias:float())
+    h5:write(prefix .. '/ana_model.hp_model.embedding.weight', pwNet:get(1):get(1):get(1).weight:float())
+    h5:write(prefix .. '/ana_model.hp_model.bias', pwNet:get(1):get(1):get(3).bias:float())
+    h5:write(prefix .. '/ana_model.ana_scoring_model.0.weight', pwNet:get(4).weight:float())
+    h5:write(prefix .. '/ana_model.ana_scoring_model.0.bias', pwNet:get(4).bias:float())
+end
 
 return model_utils
