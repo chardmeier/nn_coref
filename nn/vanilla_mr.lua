@@ -96,7 +96,7 @@ do
           anaDocBatch:sub(m,m):expand(m-1,anaDocBatch:size(2))}):squeeze(2)
       local naScore = self.naNet:forward(anaDocBatch:sub(m,m)):squeeze() -- always 1x1
 
-      allscores[m][m] = naScore:float()
+      allscores[m][m] = naScore
       allscores[{{m},{1,m-1}}] = scores:float()
 
       -- pick a latent antecedent
