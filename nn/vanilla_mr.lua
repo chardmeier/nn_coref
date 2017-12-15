@@ -230,7 +230,8 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
       end
       model.pwNet:zeroGradParameters()
       model.naNet:zeroGradParameters()
-      
+
+      print("doc " .. tostring(d) .. ", " .. tostring(anaDaa:numMents(d)) .. " mentions")
       model:docGrad(d,pwDocBatch,anaDocBatch,trOPCs[d],deltTensor,anaData:numMents(d),cdb)
       
       mu.adagradStep(model.naNet:get(1).weight,
