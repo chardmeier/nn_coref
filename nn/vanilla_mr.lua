@@ -253,8 +253,8 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
       mu.adagradStep(model.pwNet:get(4).bias,
                      model.pwNet:get(4).gradBias,eta1,statez[8])
 
-      mu.save_grads_to_hdf5(debug_h5, string(d) .. "/grads", model.naNet, model.pwNet)
-      mu.save_weights_to_hdf5(debug_h5, string(d) .. "/weights", model.naNet, model.pwNet)
+      mu.save_grads_to_hdf5(debug_h5, tostring(d) .. "/grads", model.naNet, model.pwNet)
+      mu.save_weights_to_hdf5(debug_h5, tostring(d) .. "/weights", model.naNet, model.pwNet)
       if d == 10 then
         debug_h5:close()
         os.exit()
