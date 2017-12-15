@@ -82,13 +82,23 @@ do
   
   function VanillaMR:docGrad(d,pwDocBatch,anaDocBatch,OPC,deltTensor,numMents,cdb)
 
-    for m = 2, numMents do -- ignore first guy; always NA 
+    local allscores = torch.zeros(numMents, numMents)
+    local cost_per_example = torch.zeros(numMents)
+    local loss_per_example = torch.zeros(numMents)
+    local loss = .0
+
+    allscores[1][1] = self.naNet:forward(anaDocBatch:sub(1,1)):squeeze()
+    for m = 2, numMents do -- ignore first guy; always NA
       local cid = OPC.m2c[m]
       local start = ((m-2)*(m-1))/2 -- one behind first pair for mention m
       
       local scores = self.pwNet:forward({pwDocBatch:sub(start+1,start+m-1),
           anaDocBatch:sub(m,m):expand(m-1,anaDocBatch:size(2))}):squeeze(2)
       local naScore = self.naNet:forward(anaDocBatch:sub(m,m)):squeeze() -- always 1x1
+
+      allscores[m][m] = naScore:float()
+      allscores[{{m},{1,m-1}}] = scores:float()
+
       -- pick a latent antecedent
       local late = m
       local lateScore = naScore
@@ -98,8 +108,17 @@ do
       end
 
       local pred, delt = simpleMultLAArgmax(OPC,scores,m,lateScore,naScore,0,self.fl,self.fn,self.wl)
-          
+
+      cost_per_example[m] = delt
+
       if delt > 0 then
+        local predScore = naScore
+        if pred ~= m then
+          predScore = scores[pred]
+        end
+        local my_loss = delt * (1.0 - lateScore + predScore)
+        loss = loss + my_loss
+        loss_per_example[m] = my_loss
         deltTensor[1][1] = delt
         -- gradients involve adding predicted thing and subtracting latent thing
         if pred ~= m then
@@ -123,8 +142,9 @@ do
         end
       end  -- end if delt > 0
     end -- end for m
+    print('loss: ' .. tostring(loss))
+    return allscores
   end
-
 end
 
 do
@@ -232,7 +252,8 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
       model.naNet:zeroGradParameters()
 
       print("doc " .. tostring(d) .. ", " .. tostring(anaData:numMents(d)) .. " mentions")
-      model:docGrad(d,pwDocBatch,anaDocBatch,trOPCs[d],deltTensor,anaData:numMents(d),cdb)
+      local allscores = model:docGrad(d,pwDocBatch,anaDocBatch,trOPCs[d],deltTensor,anaData:numMents(d),cdb)
+      debug_h5:write(tostring(d) .. "/allscores", allscores)
       
       mu.adagradStep(model.naNet:get(1).weight,
                      model.naNet:get(1).gradWeight,eta0,statez[1])
