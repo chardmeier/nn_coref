@@ -1,6 +1,7 @@
 require 'nn'
 require 'coref_utils'
 require 'sparse_doc_data'
+require 'os'
 
 local mu = require 'model_utils'
 
@@ -209,6 +210,7 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
   local i_h5 = hdf5.open(serFi..".init.h5", "w")
   mu.save_weights_to_hdf5(i_h5, "MentionRankingModel", model.naNet, model.pwNet)
   i_h5:close()
+  local debug_h5 = hdf5.open(serFi..".debug.h5", "w")
   while keepGoing do
     print("epoch: " .. tostring(ep))
     model.naNet:training()
@@ -249,7 +251,13 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
       mu.adagradStep(model.pwNet:get(4).weight,
                      model.pwNet:get(4).gradWeight,eta1,statez[7])
       mu.adagradStep(model.pwNet:get(4).bias,
-                     model.pwNet:get(4).gradBias,eta1,statez[8])              
+                     model.pwNet:get(4).gradBias,eta1,statez[8])
+
+      mu.save_grads_to_hdf5(debug_h5, std(d) .. "/grads", model.naNet, model.pwNet)
+      mu.save_weights_to_hdf5(debug_h5, str(d) .. "/weights", model.naNet, model.pwNet)
+      if d == 10 then
+        os.exit()
+      end
     end
     if save then
       print("overwriting params...")
