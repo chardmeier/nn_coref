@@ -256,6 +256,7 @@ function train(pwData,anaData,trOPCs,cdb,pwDevData,anaDevData,devOPCs,devCdb,Hp,
       mu.save_grads_to_hdf5(debug_h5, std(d) .. "/grads", model.naNet, model.pwNet)
       mu.save_weights_to_hdf5(debug_h5, str(d) .. "/weights", model.naNet, model.pwNet)
       if d == 10 then
+        debug_h5:close()
         os.exit()
       end
     end
